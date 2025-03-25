@@ -8,7 +8,7 @@ import { ThemeProvider } from '../context/ThemeContext';
 function App() {
   return (
     <ThemeProvider>
-      <BrowserRouter>
+      <BrowserRouter basename="/">
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/" element={<Main />}>
