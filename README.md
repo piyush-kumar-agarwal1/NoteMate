@@ -180,17 +180,17 @@ Contributions are welcome! Follow these steps to contribute:
 
 1. Fork the repository
 2. Create a new branch
-
+   ```bash
    git checkout -b feature/amazing-feature
-
+   ```
 3. Make your changes & commit
-
+   ```bash
    git commit -m "Add amazing feature"
-
+   ```
 4. Push to your branch
-
+   ```bash
    git push origin feature/amazing-feature
-
+   ```
 5. Open a Pull Request 🚀
 
 ## 📄 License
