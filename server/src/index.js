@@ -1,11 +1,11 @@
-import dotenv from 'dotenv';
-import './db';
-import cors from 'cors';
-import express from 'express';
-import authRouter from './routers/auth.router';
-import userRouter from './routers/users.router';
-import noteRouter from './routers/notes.router';
-import { authenticateToken } from './middlewares/auth.middleware';
+const dotenv = require('dotenv');
+require('./db');
+const cors = require('cors');
+const express = require('express');
+const authRouter = require('./routers/auth.router');
+const userRouter = require('./routers/users.router');
+const noteRouter = require('./routers/notes.router');
+const { authenticateToken } = require('./middlewares/auth.middleware');
 
 dotenv.config();
 
@@ -55,4 +55,4 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Export for serverless use
-export default app;
+module.exports = app;
