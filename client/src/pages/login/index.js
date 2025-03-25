@@ -7,7 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import BrandLogo from '../../components/shared/brand';
 import LoginImg from '../../assets/login.png';
 import utils from '../../utils/localStorage';
-
+import API_BASE_URL from '../../apis/config.js';
 import styles from './login.module.scss';
 
 function Login() {
@@ -95,7 +95,7 @@ function Login() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/users/login', {
+      const response = await fetch(`${API_BASE_URL}/users/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -141,7 +141,7 @@ function Login() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/users/signup', {
+      const response = await fetch(`${API_BASE_URL}/users/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
