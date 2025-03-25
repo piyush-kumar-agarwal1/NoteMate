@@ -1,21 +1,20 @@
-import dotenv from 'dotenv';
-import './db';
-import cors from 'cors';
-import express from 'express';
-import authRouter from './routers/auth.router';
-import userRouter from './routers/users.router';
-import noteRouter from './routers/notes.router';
-import { authenticateToken } from './middlewares/auth.middleware';
+const dotenv = require('dotenv');
+require('./db');
+const cors = require('cors');
+const express = require('express');
+const authRouter = require('./routers/auth.router');
+const userRouter = require('./routers/users.router');
+const noteRouter = require('./routers/notes.router');
+const { authenticateToken } = require('./middlewares/auth.middleware');
 
 dotenv.config();
 
 const PORT = process.env.PORT || 3001;
 const app = express();
 
-// Configure CORS for both local and production
+// CORS configuration remains the same
 app.use(cors({
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
 
         const allowedOrigins = [
@@ -27,7 +26,6 @@ app.use(cors({
             'https://note-mate-git-main-piyush-kumar-agarwal1s-projects.vercel.app'
         ];
 
-        // Check if the origin is in the allowedOrigins
         if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app')) {
             callback(null, true);
         } else {
@@ -43,8 +41,17 @@ app.use('/api/auth', authenticateToken, authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/notes', authenticateToken, noteRouter);
 
-app.get('/', (req, res) => {
-    res.send('NoteMate API is running');
+// Simple health check route
+app.get('/api', (req, res) => {
+    res.json({ message: 'NoteMate API is running' });
+});
+// Add to server/src/index.js
+app.get('/api/debug', (req, res) => {
+    res.json({
+        environment: process.env.NODE_ENV,
+        hostname: req.hostname,
+        headers: req.headers
+    });
 });
 
 // For local development
@@ -54,5 +61,5 @@ if (process.env.NODE_ENV !== 'production') {
     });
 }
 
-// Export for serverless use
-export default app;
+// Export for Vercel serverless
+module.exports = app;
