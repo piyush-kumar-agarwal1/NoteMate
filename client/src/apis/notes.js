@@ -1,8 +1,8 @@
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+import API_BASE_URL from './config.js';
 
 export const getAllNotes = async (token) => {
     try {
-        const response = await fetch(`${API_URL}/notes/all`, {
+        const response = await fetch(`${API_BASE_URL}/notes/all`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -16,7 +16,7 @@ export const getAllNotes = async (token) => {
 
 export const createNote = async (noteData, token) => {
     try {
-        const response = await fetch(`${API_URL}/notes`, {
+        const response = await fetch(`${API_BASE_URL}/notes`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -33,7 +33,7 @@ export const createNote = async (noteData, token) => {
 
 export const updateNote = async (noteData, token) => {
     try {
-        const response = await fetch(`${API_URL}/notes`, {
+        const response = await fetch(`${API_BASE_URL}/notes`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -50,7 +50,7 @@ export const updateNote = async (noteData, token) => {
 
 export const deleteNote = async (noteId, token) => {
     try {
-        const response = await fetch(`${API_URL}/notes?id=${noteId}`, {
+        const response = await fetch(`${API_BASE_URL}/notes?id=${noteId}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`

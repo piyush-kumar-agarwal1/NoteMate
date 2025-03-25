@@ -1,8 +1,8 @@
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+import API_BASE_URL from './config.js';
 
 export const signup = async (userData) => {
     try {
-        const response = await fetch(`${API_URL}/users/signup`, {
+        const response = await fetch(`${API_BASE_URL}/users/signup`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -18,7 +18,7 @@ export const signup = async (userData) => {
 
 export const login = async (credentials) => {
     try {
-        const response = await fetch(`${API_URL}/users/login`, {
+        const response = await fetch(`${API_BASE_URL}/users/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

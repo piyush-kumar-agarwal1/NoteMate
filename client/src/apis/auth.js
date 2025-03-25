@@ -1,8 +1,8 @@
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+import API_BASE_URL from './config.js';
 
 export const getMe = async (token) => {
     try {
-        const response = await fetch(`${API_URL}/auth`, {
+        const response = await fetch(`${API_BASE_URL}/auth`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
