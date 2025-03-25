@@ -1,0 +1,12 @@
+.container {
+    display: flex;
+
+    .main {
+        width: 100%;
+        margin-left: 65px; /* Add margin equal to sidebar width */
+    }
+    
+    .content {
+        min-height: 100vh; /* Ensure content area is at least full height */
+    }
+}

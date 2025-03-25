@@ -1,0 +1,613 @@
+.container {
+    --note-padding: 24px;
+    --note-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+    --note-hover-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+    --note-hover-y: -8px;
+    --note-border-radius: 18px;
+    --note-transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    aspect-ratio: 5/4;
+    border: none;
+    border-radius: var(--note-border-radius);
+    padding: var(--note-padding);
+    gap: 15px;
+    background-color: var(--yellow);
+    box-shadow: var(--note-shadow);
+    transition: var(--note-transition);
+    position: relative;
+    overflow: hidden;
+    transform-origin: center;
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+    isolation: isolate;
+    will-change: transform, box-shadow, background-color;
+    
+    // Light shimmer effect overlay
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.3) 0%,
+            rgba(255, 255, 255, 0) 50%,
+            rgba(255, 255, 255, 0.15) 100%
+        );
+        opacity: 0;
+        transition: opacity 0.5s ease;
+        z-index: 1;
+        pointer-events: none;
+        border-radius: inherit;
+    }
+    
+    // Top colored accent bar
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.4);
+        transform: scaleX(0);
+        transform-origin: 0 0;
+        transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        z-index: 2;
+    }
+    
+    &.expanded {
+        // Position the expanded note above everything
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90%;
+        max-width: 600px;
+        height: auto;
+        min-height: 250px;
+        max-height: 80vh;
+        z-index: 1000; // Very high to be above everything
+        aspect-ratio: auto;
+        box-shadow: var(--note-hover-shadow);
+        animation: expandNote 0.3s forwards ease-out;
+        
+        // More pronounced shadow for expanded note
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.18);
+        
+        .content {
+            overflow-y: auto;
+            padding-right: 6px; // Space for scrollbar
+            max-height: calc(80vh - 100px); // Subtract space for header/footer
+            
+            // Custom scrollbar for expanded content
+            &::-webkit-scrollbar {
+                width: 5px;
+                height: 5px;
+                margin-left: 5px;
+            }
+            
+            &::-webkit-scrollbar-thumb {
+                background: rgba(0, 0, 0, 0.15);
+                border-radius: 20px;
+            }
+            
+            &::-webkit-scrollbar-track {
+                background: transparent;
+            }
+        }
+        
+        &::after {
+            transform: scaleX(1);
+        }
+    }
+    
+    &:hover:not(.expanded) {
+        transform: translateY(var(--note-hover-y)) scale(1.01);
+        box-shadow: var(--note-hover-shadow);
+        
+        &::before {
+            opacity: 1;
+        }
+        
+        &::after {
+            transform: scaleX(1);
+        }
+        
+        .footer {
+            border-top-color: rgba(0, 0, 0, 0.1);
+        }
+    }
+
+    .content {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0; 
+        overflow: hidden;
+        position: relative;
+        z-index: 2;
+        
+        p {
+            line-height: 1.7;
+            font-size: var(--fs-md);
+            font-weight: var(--fw-normal);
+            letter-spacing: 0.01em;
+            margin: 0;
+            position: relative;
+            
+            &.truncated {
+                display: -webkit-box;
+                -webkit-line-clamp: 5;
+                line-clamp: 5;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            &.expanded {
+                display: block;
+                white-space: pre-wrap;
+                overflow: visible;
+                animation: noteContentFadeIn 0.5s ease-out;
+            }
+        }
+
+        .readMoreBtn {
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: var(--black);
+            font-size: var(--fs-sm);
+            font-weight: var(--fw-medium);
+            margin-top: 12px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            align-self: flex-start;
+            transition: all 0.25s ease;
+            background-color: rgba(0, 0, 0, 0.06);
+            letter-spacing: 0.02em;
+            
+            &:hover {
+                background-color: rgba(0, 0, 0, 0.12);
+                transform: translateY(-2px);
+            }
+            
+            &:active {
+                transform: translateY(0);
+            }
+        }
+
+        .textarea {
+            height: 160px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 8px;
+            resize: none;
+            font-size: var(--fs-md);
+            line-height: 1.7;
+            padding: 12px;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+            font-family: inherit;
+            
+            &:focus {
+                background-color: rgba(255, 255, 255, 0.4);
+                outline: none;
+                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+            
+            &::placeholder {
+                opacity: 0.6;
+                color: inherit;
+            }
+        }
+
+        .colorPicker {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            padding: 8px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.25);
+            width: fit-content;
+            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            
+            .colorOption {
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                cursor: pointer;
+                transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+                position: relative;
+                
+                &:hover {
+                    transform: scale(1.25);
+                    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+                }
+                
+                &.selected {
+                    transform: scale(1.15);
+                    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.15);
+                    
+                    &::after {
+                        content: '';
+                        position: absolute;
+                        inset: 0;
+                        border-radius: 50%;
+                        border: 2px solid white;
+                        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+                        transform: scale(0.85);
+                    }
+                }
+            }
+        }
+    }
+
+    .footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: auto; 
+        padding-top: 12px;
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+        width: 100%; 
+        flex-shrink: 0;
+        position: relative;
+        z-index: 2;
+        transition: border-color 0.3s ease;
+        
+        div:first-child {
+            font-size: 13px;
+            font-weight: 500;
+            opacity: 0.75;
+            letter-spacing: 0.01em;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: flex-end;
+            min-width: 70px;
+        }
+
+        .saveBtn, .deleteBtn, .editBtn {
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s ease;
+            gap: 5px;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            letter-spacing: 0.01em;
+            
+            &:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+            }
+            
+            &:active {
+                transform: translateY(-1px);
+            }
+            
+            svg {
+                width: 16px;
+                height: 16px;
+            }
+        }
+        
+        .saveBtn {
+            background-color: var(--black);
+            color: white;
+            
+            &:hover:not(:disabled) {
+                background-color: #2d2d30;
+            }
+            
+            &:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
+            }
+        }
+        
+        .deleteBtn {
+            background-color: var(--red);
+            color: white;
+            
+            &:hover {
+                background-color: #e25046;
+            }
+        }
+        
+        .editBtn {
+            background-color: var(--cream);
+            color: var(--black);
+            padding: 7px 10px;
+            
+            &:hover {
+                background-color: #fca892;
+            }
+        }
+    }
+}
+
+// Add this to your existing .backdropOverlay class
+.backdropOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999; // Just below the expanded note
+    animation: fadeIn 0.3s forwards;
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+}
+
+// Add styling for the close button
+.closeBtn {
+    background-color: var(--black);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    margin-left: 5px;
+    
+    svg {
+        width: 18px;
+        height: 18px;
+    }
+    
+    &:hover {
+        background-color: var(--red);
+        transform: translateY(-3px);
+    }
+    
+    &:active {
+        transform: translateY(-1px);
+    }
+}
+
+
+@keyframes expandNote {
+    from {
+        opacity: 0.7;
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Custom animations */
+@keyframes noteContentFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes noteExpand {
+    0% {
+        max-height: 300px;
+    }
+    100% {
+        max-height: 80vh;
+    }
+}
+
+@keyframes notePulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2);
+    }
+    70% {
+        box-shadow: 0 0 0 8px rgba(0, 0, 0, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    }
+}
+
+/* Color-specific styles */
+.container[style*="#FBEB95"] {
+    --note-shadow: 0 8px 20px rgba(251, 235, 149, 0.3);
+    --note-hover-shadow: 0 12px 28px rgba(251, 235, 149, 0.4);
+}
+
+.container[style*="#97D2BC"] {
+    --note-shadow: 0 8px 20px rgba(151, 210, 188, 0.3);
+    --note-hover-shadow: 0 12px 28px rgba(151, 210, 188, 0.4);
+}
+
+.container[style*="#FDBAA3"] {
+    --note-shadow: 0 8px 20px rgba(253, 186, 163, 0.3);
+    --note-hover-shadow: 0 12px 28px rgba(253, 186, 163, 0.4);
+}
+
+.container[style*="#AED8FE"] {
+    --note-shadow: 0 8px 20px rgba(174, 216, 254, 0.3);
+    --note-hover-shadow: 0 12px 28px rgba(174, 216, 254, 0.4);
+}
+
+.container[style*="#E8E8E8"] {
+    --note-shadow: 0 8px 20px rgba(232, 232, 232, 0.3);
+    --note-hover-shadow: 0 12px 28px rgba(232, 232, 232, 0.4);
+}
+
+/* Dark mode adjustments */
+/* Dark mode adjustments */
+:global(body.dark) {
+    .container {
+        --note-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        --note-hover-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
+        
+        &::before {
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.1) 0%,
+                rgba(255, 255, 255, 0) 50%,
+                rgba(255, 255, 255, 0.05) 100%
+            );
+        }
+        
+        // Add this to fix text contrast in dark mode
+        p, textarea, .footer div:first-child {
+            color: rgba(0, 0, 0, 0.9); // Darkened text for better visibility
+            font-weight: 500; // Slightly bolder
+        }
+        
+        // Increase contrast for truncated text
+        p.truncated, p.expanded {
+            color: rgba(0, 0, 0, 0.9);
+            text-shadow: 0 1px 1px rgba(255, 255, 255, 0.1); // Subtle text shadow for better readability
+        }
+        
+        // More visible read more button
+        .readMoreBtn {
+            color: rgba(0, 0, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.1);
+            font-weight: 500;
+            
+            &:hover {
+                background-color: rgba(0, 0, 0, 0.18);
+            }
+        }
+        
+        .footer {
+            border-top-color: rgba(0, 0, 0, 0.1);
+            
+            div:first-child {
+                opacity: 0.9;
+                font-weight: 500; // Make date more visible
+            }
+        }
+        
+        // Improve textarea visibility in dark mode
+        .textarea {
+            color: rgba(0, 0, 0, 0.9);
+            font-weight: 500;
+            
+            &::placeholder {
+                color: rgba(0, 0, 0, 0.6);
+            }
+        }
+    }
+}
+
+/* Add these specific color adjustments for dark mode */
+:global(body.dark) {
+    // Yellow notes
+    .container[style*="#FBEB95"] {
+        p, textarea, .footer div:first-child, .readMoreBtn {
+            color: rgba(0, 0, 0, 0.9);
+        }
+    }
+    
+    // Green notes
+    .container[style*="#97D2BC"] {
+        p, textarea, .footer div:first-child, .readMoreBtn {
+            color: rgba(0, 0, 0, 0.95);
+        }
+    }
+    
+    // Coral notes
+    .container[style*="#FDBAA3"] {
+        p, textarea, .footer div:first-child, .readMoreBtn {
+            color: rgba(0, 0, 0, 0.9);
+        }
+    }
+    
+    // Blue notes
+    .container[style*="#AED8FE"] {
+        p, textarea, .footer div:first-child, .readMoreBtn {
+            color: rgba(0, 0, 0, 0.95);
+        }
+    }
+    
+    // Gray notes
+    .container[style*="#E8E8E8"] {
+        p, textarea, .footer div:first-child, .readMoreBtn {
+            color: rgba(0, 0, 0, 0.9);
+        }
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        --note-padding: 20px;
+        --note-border-radius: 14px;
+        --note-hover-y: -5px;
+        
+        .content {
+            .colorPicker {
+                padding: 6px;
+                gap: 10px;
+                
+                .colorOption {
+                    width: 22px;
+                    height: 22px;
+                }
+            }
+        }
+        
+        .footer {
+            padding-top: 10px;
+            
+            .saveBtn, .deleteBtn, .editBtn {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        --note-padding: 16px;
+        --note-border-radius: 12px;
+        --note-hover-y: -3px;
+        
+        &:hover {
+            transform: translateY(var(--note-hover-y));
+        }
+    }
+}
