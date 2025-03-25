@@ -1,5 +1,4 @@
 require('dotenv').config();
-// Import DB connection
 require('./db');
 
 const cors = require('cors');
@@ -25,6 +24,12 @@ app.get('/', (req, res) => {
     res.send('NoteMate API is running');
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+}
+
+// Export for serverless use
+module.exports = app;
