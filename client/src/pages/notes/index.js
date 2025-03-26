@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useOutletContext, useLocation } from 'react-router-dom';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import styles from './notes.module.scss';
@@ -17,7 +17,13 @@ function Notes() {
   const [filteredNotes, setFilteredNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [localRefreshTrigger, setLocalRefreshTrigger] = useState(0);
+  // Initialize to false - don't show the template by default
+  const [showNewNoteTemplate, setShowNewNoteTemplate] = useState(false);
   const location = useLocation();
+
+  // Get the current URL query parameters
+  const queryParams = new URLSearchParams(location.search);
+  const showTemplate = queryParams.get('newNote') === 'true';
 
   const { searchTerm = '', refreshTrigger = 0, triggerRefresh, initialLoad = false } = useOutletContext() || {};
 
@@ -25,22 +31,137 @@ function Notes() {
   const viewMode = utils.getFromLocalStorage('view_mode') || 'notes';
   const isDashboardView = viewMode === 'dashboard';
 
+  // Watch for URL query parameter changes to show/hide the template
+  useEffect(() => {
+    if (showTemplate && !isDashboardView) {
+      setShowNewNoteTemplate(true);
+
+      // Clean up URL after setting the state (prevent re-displaying on refresh)
+      // This will remove the parameter without causing a page reload
+      if (window.history.replaceState) {
+        const newUrl = window.location.pathname; // URL without query params
+        window.history.replaceState({ path: newUrl }, '', newUrl);
+      }
+    }
+  }, [showTemplate, isDashboardView]);
+
+  // Add this ref at the top of your component
+  const welcomeShown = React.useRef(false);
+
+  // Then modify your welcome tour useEffect
+  useEffect(() => {
+    // If tour has already been shown during this component lifecycle, don't show again
+    if (welcomeShown.current) {
+      return;
+    }
+
+    // Check for welcome parameter in URL
+    const queryParams = new URLSearchParams(location.search);
+    const showWelcome = queryParams.get('welcome') === 'true';
+
+    // Or check for welcome_tour timestamp (less than 2 minutes old)
+    const welcomeTourTimestamp = utils.getFromLocalStorage('welcome_tour');
+    const isRecentSignup = welcomeTourTimestamp &&
+      (Date.now() - parseInt(welcomeTourTimestamp) < 2 * 60 * 1000);
+
+    // Get user name
+    const userName = utils.getFromLocalStorage('user_name') || 'there';
+
+    // Show welcome tour if either condition is true
+    if (showWelcome || isRecentSignup) {
+      // Mark as shown immediately to prevent duplicate tours
+      welcomeShown.current = true;
+
+      // Clear the welcome tour timestamp
+      utils.removeFromLocalStorage('welcome_tour');
+
+      // Remove the welcome parameter from URL without page reload
+      if (showWelcome) {
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+      }
+
+      // Clear all existing toasts first
+      toast.dismiss();
+
+      // Add a slight delay before showing first toast
+      const welcomeTimer1 = setTimeout(() => {
+        toast.info(`👋 Welcome to NoteMate, ${userName}!`, {
+          position: "top-center",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          toastId: "welcome-1" // Prevent duplicate toasts
+        });
+      }, 1000);
+
+      const welcomeTimer2 = setTimeout(() => {
+        toast.info("📝 Click the + button in the sidebar to create your first note", {
+          position: "top-center",
+          autoClose: 4000,
+          toastId: "welcome-2"
+        });
+      }, 4500);
+
+      const welcomeTimer3 = setTimeout(() => {
+        toast.info("🎨 You can color-code your notes for better organization", {
+          position: "top-center",
+          autoClose: 4000,
+          toastId: "welcome-3"
+        });
+      }, 9000);
+
+      const welcomeTimer4 = setTimeout(() => {
+        toast.info("📊 Switch to Dashboard view using the home icon to see your note stats", {
+          position: "top-center",
+          autoClose: 4000,
+          toastId: "welcome-4"
+        });
+      }, 13500);
+
+      // Clean up timers if component unmounts during welcome sequence
+      return () => {
+        clearTimeout(welcomeTimer1);
+        clearTimeout(welcomeTimer2);
+        clearTimeout(welcomeTimer3);
+        clearTimeout(welcomeTimer4);
+      };
+    }
+  }, [location.search]); // Keep dependency on location.search
+
   // Improved refreshNotes function with direct state update option
-  const refreshNotes = (updatedNotesArray) => {
-    // If we already have the updated notes array, set it directly
+  const refreshNotes = useCallback((updatedNotesArray) => {
     if (updatedNotesArray) {
-      setNotes(updatedNotesArray);
-      // Also update filtered notes to maintain search results
-      if (!searchTerm.trim()) {
-        setFilteredNotes(updatedNotesArray);
+      // Clear any empty notes that might have been saved accidentally
+      const cleanedNotes = updatedNotesArray.filter(note => note && note.text && note.text.trim());
+
+      // If we already have the updated notes array, set it directly
+      setNotes(cleanedNotes);
+
+      // Update filtered notes based on search term
+      if (!searchTerm || !searchTerm.trim()) {
+        setFilteredNotes(cleanedNotes);
       } else {
-        const filtered = updatedNotesArray.filter(note =>
-          note.text.toLowerCase().includes(searchTerm.toLowerCase())
+        const filtered = cleanedNotes.filter(note =>
+          note.text && note.text.toLowerCase().includes(searchTerm.toLowerCase())
         );
         setFilteredNotes(filtered);
       }
+
+      // Save the cleaned notes to localStorage
+      const allStoredNotes = utils.getFromLocalStorage(types.NOTES_DATA) || [];
+      const userId = utils.getFromLocalStorage('user_id');
+      const otherUserNotes = allStoredNotes.filter(note =>
+        note && note.userId && String(note.userId) !== String(userId)
+      );
+
+      utils.addToLocalStorage(types.NOTES_DATA, [...cleanedNotes, ...otherUserNotes]);
+
+      // REMOVED: Don't automatically show a new template after refresh
     } else {
-      // Still trigger the regular refresh cycle
+      // Trigger a refresh cycle by updating the trigger state
       setLocalRefreshTrigger(prev => prev + 1);
     }
 
@@ -48,14 +169,15 @@ function Notes() {
     if (triggerRefresh) {
       triggerRefresh();
     }
-  };
+  }, [searchTerm, triggerRefresh]);
 
   // Fetch notes when component mounts or refresh is triggered
   useEffect(() => {
     const fetchNotes = async () => {
       setLoading(true);
-      const token = utils.getFromLocalStorage('auth_key');
-      const userId = utils.getFromLocalStorage('user_id');
+      // CHANGE: Use helper methods for auth data
+      const token = utils.getAuthToken();
+      const userId = utils.getUserId();
 
       if (!userId) {
         console.error("No user ID found - cannot load notes");
@@ -66,23 +188,31 @@ function Notes() {
       // Get ALL notes from localStorage first
       const allStoredNotes = utils.getFromLocalStorage(types.NOTES_DATA) || [];
 
-      // Strict filtering: Only include notes with exact userId match
+      // Ensure consistent ID type for comparison (string) and filter out empty notes
       const userNotes = allStoredNotes.filter(note =>
-        String(note.userId) === String(userId)
+        note &&
+        String(note.userId) === String(userId) &&
+        note.text &&
+        note.text.trim()
       );
 
       if (userNotes.length) {
-        // Ensure all notes have userId field
+        // Ensure all notes have userId field and validate structure
         const updatedNotes = userNotes.map(note => ({
           ...note,
-          userId: userId // Ensure userId is set
+          userId: userId,
+          // Use existing ID or create a string-based ID (not using timestamp + random)
+          id: note.id || `client-note-${Math.random().toString(36).substr(2, 9)}`,
+          text: note.text || "",
+          createdAt: note.createdAt || new Date().toISOString(),
+          color: note.color || "#FBEB95"
         }));
 
         // Update localStorage if we fixed any notes
-        if (updatedNotes.some(note => !note.userId)) {
+        if (updatedNotes.some((note, i) => JSON.stringify(note) !== JSON.stringify(userNotes[i]))) {
           utils.addToLocalStorage(types.NOTES_DATA, [
             ...updatedNotes,
-            ...allStoredNotes.filter(note => note.userId && note.userId !== userId) // Keep other users' notes
+            ...allStoredNotes.filter(note => note.userId && String(note.userId) !== String(userId)) // Keep other users' notes
           ]);
         }
 
@@ -95,10 +225,18 @@ function Notes() {
           const serverNotes = await getAllNotes(token);
 
           if (serverNotes && Array.isArray(serverNotes) && serverNotes.length > 0) {
-            // Ensure all server notes have userId
-            const processedServerNotes = serverNotes.map(note => ({
+            // Filter out empty notes from server
+            const nonEmptyServerNotes = serverNotes.filter(note => note.text && note.text.trim());
+
+            // Ensure all server notes have userId and proper structure
+            const processedServerNotes = nonEmptyServerNotes.map(note => ({
               ...note,
-              userId: userId
+              userId: userId,
+              // For server notes, preserve the MongoDB ObjectId as id
+              id: note._id || note.id || `server-note-${Math.random().toString(36).substr(2, 9)}`,
+              text: note.text || "",
+              createdAt: note.createdAt || new Date().toISOString(),
+              color: note.color || "#FBEB95"
             }));
 
             // Update state with server notes
@@ -108,7 +246,7 @@ function Notes() {
             // Update localStorage with server notes while preserving others' notes
             utils.addToLocalStorage(types.NOTES_DATA, [
               ...processedServerNotes,
-              ...allStoredNotes.filter(note => note.userId && note.userId !== userId)
+              ...allStoredNotes.filter(note => note.userId && String(note.userId) !== String(userId))
             ]);
 
             toast.success("Notes loaded from server", { autoClose: 2000 });
@@ -116,13 +254,15 @@ function Notes() {
             // If no server notes and not initial load, initialize with sample data
             const sampleNotesWithUserId = notesData.map(note => ({
               ...note,
-              userId: userId
+              userId: userId,
+              id: note.id || `sample-note-${Math.random().toString(36).substr(2, 9)}`,
+              createdAt: note.createdAt || new Date().toISOString()
             }));
 
             // Add sample notes to localStorage but preserve other users' notes
             utils.addToLocalStorage(types.NOTES_DATA, [
               ...sampleNotesWithUserId,
-              ...allStoredNotes.filter(note => note.userId && note.userId !== userId)
+              ...allStoredNotes.filter(note => note.userId && String(note.userId) !== String(userId))
             ]);
 
             setNotes(sampleNotesWithUserId);
@@ -135,13 +275,15 @@ function Notes() {
           if (!initialLoad) {
             const sampleNotesWithUserId = notesData.map(note => ({
               ...note,
-              userId: userId
+              userId: userId,
+              id: note.id || `sample-note-${Math.random().toString(36).substr(2, 9)}`,
+              createdAt: note.createdAt || new Date().toISOString()
             }));
 
             // Add sample notes to localStorage but preserve other users' notes
             utils.addToLocalStorage(types.NOTES_DATA, [
               ...sampleNotesWithUserId,
-              ...allStoredNotes.filter(note => note.userId && note.userId !== userId)
+              ...allStoredNotes.filter(note => note.userId && String(note.userId) !== String(userId))
             ]);
 
             setNotes(sampleNotesWithUserId);
@@ -154,20 +296,26 @@ function Notes() {
     };
 
     fetchNotes();
-  }, [refreshTrigger, localRefreshTrigger, location, initialLoad]);
+  }, [refreshTrigger, localRefreshTrigger, location, initialLoad, isDashboardView]);
 
   // Filter notes by search term
   useEffect(() => {
-    if (!searchTerm.trim()) {
+    if (!searchTerm || !searchTerm.trim()) {
       setFilteredNotes(notes);
       return;
     }
 
     const filtered = notes.filter(note =>
-      note.text.toLowerCase().includes(searchTerm.toLowerCase())
+      note.text && note.text.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredNotes(filtered);
   }, [searchTerm, notes]);
+
+  // Handle new note creation 
+  const handleNewNoteSave = useCallback(() => {
+    // When a new note is saved, hide the template 
+    setShowNewNoteTemplate(false);
+  }, []);
 
   return (
     <section className={styles.container}>
@@ -182,13 +330,21 @@ function Notes() {
         <Dashboard notes={notes} refreshNotes={refreshNotes} />
       ) : (
         <main className={styles.notesGrid}>
-          <Note
-            refreshNotes={refreshNotes}
-            userId={utils.getFromLocalStorage('user_id')}
-          />
+          {/* Empty note template for creating new notes - only show when requested */}
+          {showNewNoteTemplate && (
+            <Note
+              key="new-note-template"
+              refreshNotes={refreshNotes}
+              userId={utils.getFromLocalStorage('user_id')}
+              onSave={handleNewNoteSave}
+              isTemplate={true}
+            />
+          )}
+
+          {/* Render all filtered notes */}
           {filteredNotes.map((note) => (
             <Note
-              key={note.id}
+              key={`note-${note.id}`}
               id={note.id}
               text={note.text}
               date={note.createdAt}
@@ -197,6 +353,8 @@ function Notes() {
               userId={note.userId}
             />
           ))}
+
+          {/* Show message when search returns no results */}
           {filteredNotes.length === 0 && searchTerm && (
             <div className={styles.noResults}>
               <Icon icon="mingcute:search-line" className={styles.searchIcon} />
@@ -204,11 +362,13 @@ function Notes() {
               <p>Try a different search term</p>
             </div>
           )}
+
+          {/* Show message when user has no notes */}
           {filteredNotes.length === 0 && !searchTerm && (
             <div className={styles.noNotes}>
               <Icon icon="mdi:notebook-outline" className={styles.emptyIcon} />
               <h3>No notes yet</h3>
-              <p>Start by creating a new note above</p>
+              <p>Start by creating a new note using the sidebar</p>
             </div>
           )}
         </main>

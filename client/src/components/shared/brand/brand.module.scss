@@ -17,4 +17,21 @@
             font-style: italic;
         }
     }
+    
+}
+.brandName {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  
+  .note {
+    color: var(--black);
+    font-weight: 600;
+  }
+  
+.mate {
+    color: var(--dark-green);
+    font-weight: 600;
+}
 }

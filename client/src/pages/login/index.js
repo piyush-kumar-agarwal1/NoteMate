@@ -87,6 +87,8 @@ function Login() {
     return Object.keys(errors).length === 0;
   };
 
+  // In the handleSignin function, add storing the user's name:
+
   const handleSignin = async (e) => {
     e.preventDefault();
 
@@ -110,17 +112,40 @@ function Login() {
 
       if (data?.success === 201) {
         toast.success('Successfully logged in!');
-        utils.addToLocalStorage('auth_key', data.token);
 
-        // Store the user ID for note ownership verification
-        utils.addToLocalStorage('user_id', data.userId || data._id || Date.now().toString());
+        // CHANGE: Store auth data in sessionStorage only (not localStorage)
+        utils.addToSessionStorage('auth_key', data.token);
+        utils.addToSessionStorage('user_id', data.userId || data._id || Date.now().toString());
 
-        // Add success animation before redirect
+        // Store user name in sessionStorage
+        try {
+          const userResponse = await fetch('http://localhost:3001/api/users/me', {
+            headers: {
+              'Authorization': `Bearer ${data.token}`
+            }
+          });
+
+          const userData = await userResponse.json();
+          if (userData && userData.name) {
+            utils.addToSessionStorage('user_name', userData.name);
+          } else {
+            utils.addToSessionStorage('user_name', formData.email.split('@')[0]);
+          }
+        } catch (err) {
+          utils.addToSessionStorage('user_name', formData.email.split('@')[0]);
+        }
+
+        // Continue with redirect
         document.querySelector(`.${styles.formPanel}`).classList.add(styles.success);
-
         setTimeout(() => {
           navigate('/notes');
         }, 800);
+      } else {
+        toast.error(data?.message || 'Login failed');
+        document.querySelector(`.${styles.formPanel}`).classList.add(styles.error);
+        setTimeout(() => {
+          document.querySelector(`.${styles.formPanel}`).classList.remove(styles.error);
+        }, 600);
       }
     } catch (err) {
       toast.error('Unable to connect to server');
@@ -132,6 +157,8 @@ function Login() {
       setIsLoading(false);
     }
   };
+
+  // In the handleSignup function:
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -158,14 +185,45 @@ function Login() {
       if (data?.success === 201) {
         toast.success('Account created successfully!');
 
-        // Show success animation
-        document.querySelector(`.${styles.formPanel}`).classList.add(styles.success);
+        // Now automatically log the user in after signup
+        const loginResponse = await fetch('http://localhost:3001/api/users/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password
+          }),
+        });
 
-        setTimeout(() => {
-          // Switch to signin and remove success class
-          document.querySelector(`.${styles.formPanel}`).classList.remove(styles.success);
-          switchTab('signin');
-        }, 1000);
+        const loginData = await loginResponse.json();
+
+        if (loginData?.success === 201) {
+          // Store auth data in sessionStorage instead of localStorage
+          utils.addToSessionStorage('auth_key', loginData.token);
+          utils.addToSessionStorage('user_id', loginData.userId || loginData._id);
+          utils.addToSessionStorage('user_name', formData.name);
+
+          // Set first login flag for welcome tour
+          utils.addToSessionStorage('welcome_tour', Date.now().toString());
+
+          // Show success animation
+          document.querySelector(`.${styles.formPanel}`).classList.add(styles.success);
+
+          // Redirect to notes page
+          setTimeout(() => {
+            navigate('/notes?welcome=true');
+          }, 800);
+        } else {
+          // If auto-login fails, redirect to sign-in tab
+          toast.info('Please sign in with your new account');
+          document.querySelector(`.${styles.formPanel}`).classList.add(styles.success);
+          setTimeout(() => {
+            switchTab('signin');
+            document.querySelector(`.${styles.formPanel}`).classList.remove(styles.success);
+          }, 800);
+        }
       } else {
         toast.error(data?.message || 'Signup failed');
         document.querySelector(`.${styles.formPanel}`).classList.add(styles.error);

@@ -1,21 +1,120 @@
 .container {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    // padding: 70px 0 40px;
+    gap: 12px;
+    margin-bottom: 20px;
+    animation: fadeSlideIn 0.6s ease-out;
 
     h1 {
-        font-size: 34px;
-        font-weight: var(--fw-light);
+        font-size: 38px;
+        font-weight: 500;
+        margin: 0;
+        position: relative;
+        background: linear-gradient(90deg, var(--black), #555);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
         
-        span {
-            font-size: 34px;
-            font-weight: var(--fw-bold);
+        &::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -6px;
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--green), transparent);
+            animation: expandWidth 0.8s ease-out forwards;
         }
     }
 
     p {
-        font-size: var(--fs-lg);
-        font-weight: var(--fw-light);
+        font-size: 18px;
+        font-weight: 300;
+        color: #555;
+        margin: 0;
+        padding-top: 8px;
+        max-width: 600px;
+        animation: fadeIn 1s ease-out;
+    }
+}
+
+// Animation keyframes
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes expandWidth {
+    from {
+        width: 0;
+    }
+    to {
+        width: 80px;
+    }
+}
+
+// Dark mode support
+:global(body.dark) {
+    .container {
+        h1 {
+            background: linear-gradient(90deg, #e0e0e0, #a0a0a0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            
+            &::after {
+                background: linear-gradient(90deg, var(--green), transparent);
+            }
+        }
+
+        p {
+            color: #bbb;
+        }
+    }
+}
+
+// Responsive styles
+@media (max-width: 768px) {
+    .container {
+        padding: 10px 0;
+        
+        h1 {
+            font-size: 32px;
+            
+            &::after {
+                width: 60px;
+                bottom: -4px;
+            }
+        }
+        
+        p {
+            font-size: 16px;
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        h1 {
+            font-size: 28px;
+        }
+        
+        p {
+            font-size: 15px;
+        }
     }
 }

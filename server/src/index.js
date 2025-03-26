@@ -12,7 +12,7 @@ dotenv.config();
 const PORT = process.env.PORT || 3001;
 const app = express();
 
-// Configure CORS for both local and production
+// Update the CORS configuration to accept requests from the deployed client
 app.use(cors({
     origin: function (origin, callback) {
         // Allow requests with no origin (like mobile apps or curl requests)
@@ -23,8 +23,9 @@ app.use(cors({
             'https://notemate-rho.vercel.app',
             'https://notemate.vercel.app',
             'https://note-mate-delta.vercel.app',
-            'https://note-mate-piyush-kumar-agarwal1s-projects.vercel.app',
-            'https://note-mate-git-main-piyush-kumar-agarwal1s-projects.vercel.app'
+            'https://note-mate-git-main-piyush-kumar-agarwal1s-projects.vercel.app',
+            // Add your new Vercel deployment URL here:
+            'https://notemate-client.vercel.app'
         ];
 
         // Check if the origin is in the allowedOrigins

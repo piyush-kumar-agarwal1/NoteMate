@@ -1,46 +1,83 @@
-function addToLocalStorage(key, value) {
-    if(typeof value === 'object') {
-      localStorage.setItem(key, JSON.stringify(value));
-    } else {
-        localStorage.setItem(key, value);
+// Complete update to utils/localStorage.js to properly handle separate tab sessions
+
+// Existing localStorage methods
+const addToLocalStorage = (key, value) => {
+    if (typeof window !== 'undefined') {
+        localStorage.setItem(key, JSON.stringify(value));
     }
 };
 
-function getFromLocalStorage(key) {
-    let value = localStorage.getItem(key);
-    if(!value) {
-        return null;
+const getFromLocalStorage = (key) => {
+    if (typeof window !== 'undefined') {
+        const value = localStorage.getItem(key);
+        if (value) {
+            try {
+                return JSON.parse(value);
+            } catch (e) {
+                return value;
+            }
+        }
     }
+    return null;
+};
 
-    try {
-        return JSON.parse(value);
-    } catch(e) {
-        return value;
+const removeFromLocalStorage = (key) => {
+    if (typeof window !== 'undefined') {
+        localStorage.removeItem(key);
     }
 };
 
-function updateLocalStorage(key, updatedValue) {
-    let value = localStorage.getItem(key);
-    if(!value) {
-        return null;
-    }
-
-    try {
-        localStorage.setItem(key, updatedValue);
-    } catch(e) {
-        return value;
+// SessionStorage methods (tab-specific)
+const addToSessionStorage = (key, value) => {
+    if (typeof window !== 'undefined') {
+        sessionStorage.setItem(key, JSON.stringify(value));
     }
 };
 
-function removeFromLocalStorage(key) {
-    localStorage.removeItem(key);
+const getFromSessionStorage = (key) => {
+    if (typeof window !== 'undefined') {
+        const value = sessionStorage.getItem(key);
+        if (value) {
+            try {
+                return JSON.parse(value);
+            } catch (e) {
+                return value;
+            }
+        }
+    }
+    return null;
 };
 
-const methods = {
+const removeFromSessionStorage = (key) => {
+    if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(key);
+    }
+};
+
+// Helper methods that prioritize sessionStorage for auth data
+const getAuthToken = () => {
+    return getFromSessionStorage('auth_key');
+};
+
+const getUserId = () => {
+    return getFromSessionStorage('user_id');
+};
+
+const getUserName = () => {
+    return getFromSessionStorage('user_name');
+};
+
+// Export all methods
+const localStorageUtils = {
     addToLocalStorage,
     getFromLocalStorage,
-    updateLocalStorage,
-    removeFromLocalStorage
-}
+    removeFromLocalStorage,
+    addToSessionStorage,
+    getFromSessionStorage,
+    removeFromSessionStorage,
+    getAuthToken,
+    getUserId,
+    getUserName
+};
 
-export default methods;
+export default localStorageUtils;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,45 +11,64 @@ import utils from '../../../utils/localStorage';
 import types from '../../../config/types';
 import { toast } from 'react-toastify';
 
-function Sidebar({ onRefresh, initialLoad }) {
+function Sidebar({ onRefresh }) {
     const navigate = useNavigate();
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+    // Use effect to mark initial load complete after component mounts
+    useEffect(() => {
+        // Set a small delay to mark initial load as complete
+        const timer = setTimeout(() => {
+            setIsInitialLoad(false);
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleClick = (item) => {
+        // In the handleClick function:
         if (item.title === "Home") {
-            // Your existing Home code...
+            // Toggle between dashboard and notes view
+            const currentMode = utils.getFromLocalStorage('view_mode') || 'notes';
+            const newMode = currentMode === 'notes' ? 'dashboard' : 'notes';
+            utils.addToLocalStorage('view_mode', newMode);
+
+            // Show dashboard stats when switching to dashboard view
+            if (newMode === 'dashboard') {
+                const allNotes = utils.getFromLocalStorage(types.NOTES_DATA) || [];
+                const userId = utils.getFromLocalStorage('user_id');
+
+                // Filter notes to only include those belonging to the current user
+                const userNotes = allNotes.filter(note =>
+                    note && String(note.userId) === String(userId)
+                );
+
+                displayNoteStatsSummary(userNotes);
+            }
+
+            navigate('/notes', { replace: true });
+            if (onRefresh) onRefresh();
         } else if (item.title === "Add Note") {
-            // Check if this is initial load - if so, don't create a new note
-            if (initialLoad) return;
+            // Prevent creating notes on initial load or reload
+            if (isInitialLoad) return;
 
-            // Create a new empty note
-            let data = utils.getFromLocalStorage(types.NOTES_DATA) || [];
-            const userId = utils.getFromLocalStorage('user_id');
+            // Prevent creating multiple notes in quick succession
+            const lastCreatedTime = utils.getFromLocalStorage('last_note_created');
+            const now = Date.now();
 
-            if (!userId) {
-                toast.error("You must be logged in to create notes");
+            // If we created a note in the last 2 seconds, don't create another
+            if (lastCreatedTime && now - lastCreatedTime < 2000) {
                 return;
             }
 
-            // Create a unique ID for the new note
-            const newNote = {
-                id: Date.now(),
-                text: "",
-                createdAt: new Date().toISOString(),
-                color: "#FBEB95",
-                userId: userId
-            };
-
-            // Add new note to beginning
-            let updatedData = [newNote, ...data];
-
-            // Save to localStorage
-            utils.addToLocalStorage(types.NOTES_DATA, updatedData);
+            // Store the timestamp to prevent rapid clicks
+            utils.addToLocalStorage('last_note_created', now);
 
             // Switch to notes view if in dashboard
             utils.addToLocalStorage('view_mode', 'notes');
 
-            // Navigate to ensure we're in notes view
-            navigate('/notes', { replace: true });
+            // Navigate to notes with a query parameter to show template
+            navigate('/notes?newNote=true', { replace: true });
 
             // Trigger refresh
             if (onRefresh) {
@@ -58,16 +77,18 @@ function Sidebar({ onRefresh, initialLoad }) {
         }
     }
 
-    // Renamed function to avoid confusion and actually use it
+    // Now using this function when toggling to dashboard view
     const displayNoteStatsSummary = (notes) => {
         if (!notes || !notes.length) return;
 
         let totalNotes = notes.length;
-        let emptyNotes = notes.filter(note => !note.text.trim()).length;
+        let emptyNotes = notes.filter(note => !note.text || !note.text.trim()).length;
         let colorCounts = {};
 
         notes.forEach(note => {
-            colorCounts[note.color] = (colorCounts[note.color] || 0) + 1;
+            if (note && note.color) {
+                colorCounts[note.color] = (colorCounts[note.color] || 0) + 1;
+            }
         });
 
         // Find most used color
@@ -119,8 +140,18 @@ function Sidebar({ onRefresh, initialLoad }) {
             }
         }
 
-        // Proceed with normal logout
+        // Clear BOTH sessionStorage and localStorage to ensure logout works
+        utils.removeFromSessionStorage('auth_key');
+        utils.removeFromSessionStorage('user_id');
+        utils.removeFromSessionStorage('user_name');
+        utils.removeFromSessionStorage('welcome_tour');
+
+        // Also clear localStorage auth data for good measure
         utils.removeFromLocalStorage('auth_key');
+        utils.removeFromLocalStorage('user_id');
+        utils.removeFromLocalStorage('user_name');
+
+        // Navigate to login page
         navigate('/');
     }
 

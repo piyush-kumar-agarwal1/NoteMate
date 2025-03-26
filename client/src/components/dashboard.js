@@ -144,13 +144,30 @@ function Dashboard({ notes, refreshNotes }) {
                 {stats.recentNotes.length > 0 ? (
                     stats.recentNotes.map(note => (
                         <div
-                            key={note.id}
+                            key={note.id || Math.random().toString(36).substring(7)}
                             className={styles.recentNote}
-                            style={{ backgroundColor: note.color }}
+                            style={{ backgroundColor: note.color || "#FBEB95" }}
                         >
-                            <p>{note.text.length > 100 ? note.text.substring(0, 100) + '...' : note.text}</p>
+                            <div className={styles.noteText}>
+                                {typeof note.text === 'string' ?
+                                    (note.text.length > 100
+                                        ? note.text.substring(0, 100).split('\n').map((line, i) => (
+                                            <React.Fragment key={i}>
+                                                {line}
+                                                {i < note.text.substring(0, 100).split('\n').length - 1 && <br />}
+                                            </React.Fragment>
+                                        )) + '...'
+                                        : note.text.split('\n').map((line, i) => (
+                                            <React.Fragment key={i}>
+                                                {line}
+                                                {i < note.text.split('\n').length - 1 && <br />}
+                                            </React.Fragment>
+                                        ))
+                                    ) : 'No content'
+                                }
+                            </div>
                             <div className={styles.noteFooter}>
-                                <span>{new Date(note.createdAt).toLocaleDateString()}</span>
+                                <span>{note.createdAt ? new Date(note.createdAt).toLocaleDateString() : 'Unknown date'}</span>
                             </div>
                         </div>
                     ))
@@ -173,12 +190,12 @@ function Dashboard({ notes, refreshNotes }) {
                                 <div
                                     className={styles.colorBarFill}
                                     style={{
-                                        width: `${(count / stats.totalNotes) * 100}%`,
+                                        width: `${stats.totalNotes > 0 ? (count / stats.totalNotes) * 100 : 0}%`,
                                         backgroundColor: color
                                     }}
                                 ></div>
                             </div>
-                            <span>{count} ({Math.round((count / stats.totalNotes) * 100)}%)</span>
+                            <span>{count} ({stats.totalNotes > 0 ? Math.round((count / stats.totalNotes) * 100) : 0}%)</span>
                         </div>
                     ))
                 ) : (

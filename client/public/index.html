@@ -3,12 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#4A6FDC" />
     <meta
       name="description"
-      content="Web site created using create-react-app"
+      content="NoteMate - A modern note-taking application to organize your thoughts and ideas with beautiful interfaces and powerful features"
     />
 
+    <!-- Favicon -->
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+
+    <!-- Fonts - Preload for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -16,11 +22,61 @@
       rel="stylesheet"
     />
 
-    <title>NoteMate</title>
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="NoteMate | Modern Note Taking" />
+    <meta
+      property="og:description"
+      content="Organize your thoughts with NoteMate's simple and powerful note-taking tools"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://notemate.app" />
+    <meta property="og:image" content="%PUBLIC_URL%/social-preview.png" />
+    <meta property="og:site_name" content="NoteMate" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="NoteMate | Modern Note Taking" />
+    <meta
+      name="twitter:description"
+      content="Organize your thoughts with NoteMate's simple and powerful note-taking tools"
+    />
+    <meta name="twitter:image" content="%PUBLIC_URL%/social-preview.png" />
+
+    <!-- SEO -->
+    <meta
+      name="keywords"
+      content="notes, note-taking, productivity, organization, tasks, NoteMate, ideas"
+    />
+    <meta name="author" content="NoteMate Team" />
+
+    <!-- Performance & Security -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+    <title>NoteMate | Modern Note Taking</title>
   </head>
 
   <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root">Hello</div>
+    <noscript>
+      <div
+        style="
+          text-align: center;
+          padding: 20px;
+          font-family: Ubuntu, sans-serif;
+        "
+      >
+        <h2>JavaScript Required</h2>
+        <p>
+          NoteMate requires JavaScript to run. Please enable JavaScript in your
+          browser settings and reload the page.
+        </p>
+      </div>
+    </noscript>
+    <div id="root"></div>
+
+    <!-- Preconnect to API server for faster loading -->
+    <link rel="preconnect" href="http://localhost:3001" />
   </body>
 </html>

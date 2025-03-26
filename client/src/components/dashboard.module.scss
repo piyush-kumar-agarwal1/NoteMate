@@ -6,8 +6,8 @@
         margin-bottom: 30px;
         font-weight: 600;
         background: linear-gradient(90deg, var(--black), #666);
-        background-clip: text;
         -webkit-background-clip: text;
+        background-clip: text;
         -webkit-text-fill-color: transparent;
         display: inline-block;
     }
@@ -224,16 +224,38 @@
         
         .recentNote {
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            
+            // Improve text visibility without using white
+            .noteText {
+                color: rgba(0, 0, 0, 0.9); // Near-black text with high opacity
+                font-weight: 600; // Make font bolder
+                text-shadow: 0 1px 1px rgba(255, 255, 255, 0.15); // Subtle light shadow
+            }
+            
+            .noteFooter {
+                color: rgba(0, 0, 0, 0.8);
+                font-weight: 500;
+            }
         }
         
         h2 {
             background: linear-gradient(90deg, #e0e0e0, #a0a0a0);
-            background-clip: text;
             -webkit-background-clip: text;
+            background-clip: text;
         }
         
         .sectionTitle {
             color: #e0e0e0;
         }
     }
+}
+// Add to dashboard.module.scss
+.noteText {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  max-height: 150px;
+  overflow: auto;
 }
